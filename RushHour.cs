@@ -10,10 +10,17 @@ class RushHour
         ReadInput();
         Console.ReadLine();
     }
-    static Dictionary<int, Car> Cars; // ander datatype?
-    public static void AddCar(Car c, int index)
+    static Dictionary<char, Car> Cars = new Dictionary<char,Car>(); // ander datatype?
+    static int indexCount = 0;
+    static Dictionary<int,char> IndexToCarC = new Dictionary<int,char>();
+    static Dictionary<char,int> CarCToIndex = new Dictionary<char,int>();
+
+    public static void AddCar(Car c, char keyChar)
     {
-        Cars.Add(index, c);
+        Cars.Add(keyChar, c);
+        CarCToIndex.Add(keyChar,indexCount);
+        IndexToCarC.Add(indexCount,keyChar);
+        indexCount++;
     }
     static int u, w, h, x, y, s;
     public static void ReadInput()
@@ -31,49 +38,34 @@ class RushHour
         // line 4: A* heuristiek
         s = int.Parse(Console.ReadLine());
 
-        // maakt car collectie aan
-        Cars = new Dictionary<int, Car>();
         // leest grid in
         int[,] GridI = new int[w, h];
         char[] LineC;
-        for (int i = 0; i < h; i++)
+        for (int j = 0; j < h; j++)
         {
+            //lees regel in als charArray
             LineC = Console.ReadLine().ToCharArray();
-            for (int j = 0; j < w; j++)
+            for (int i = 0; i < w; i++)
             {
-                if (LineC[j] != '.')
+                if (LineC[i] != '.')
                 {
-                    GridI[j, i] = (int)LineC[j] - (int)'a';
+                    GridI[i, j] = (int)LineC[i] - (int)'a';
                     // voeg toe if new
-                    if (!Cars.ContainsKey(GridI[j, i]))
-                        AddCar(new Car(LineC[j], j, i), GridI[j, i]);
+                    if (!Cars.ContainsKey(LineC[i]))
+                        AddCar(new Car(LineC[i], i, j), LineC[i]);
                     // kijk if horizontal
-                    else if (j > 0 && GridI[j - 1, i] == GridI[j, i])
+                    else if (i > 0 && GridI[i - 1, j] == GridI[i, j])
                     {
-                        Cars[GridI[j, i]].Direction = 0;
-                        Cars[GridI[j, i]].Length++;
+                        Cars[LineC[i]].Direction = 0;
+                        Cars[LineC[i]].Length++;
                     }
                     else // car is verticaal
                     {
-                        Cars[GridI[j, i]].Direction = 1;
-                        Cars[GridI[j, i]].Length++;
+                        Cars[LineC[i]].Direction = 1;
+                        Cars[LineC[i]].Length++;
                     }
                 }
             }
         }
-    }
-}
-public class Car
-{
-    // direction: 0Horizontal, 1Vertical
-    public int Direction, Length, Xstart, Ystart;
-    public char C;
-    public Car(char c, int x, int y)
-    {
-        C = c;
-        Xstart = x;
-        Ystart = y;
-        Length = 1;
-        Direction = 0;
     }
 }
