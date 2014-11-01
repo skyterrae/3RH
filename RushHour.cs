@@ -26,7 +26,10 @@ class RushHour
             Ds[i] = St.GetAllPossibleNextSteps(CD);
             i++;
         }
-        Ds[2].ElementAt<State>(2).ChainTail.toConsole();
+        if (Ds.Count() > 2)
+            Ds[2].ElementAt<State>(2).ChainTail.toConsole();
+        else
+            Console.WriteLine("Ds.Count < 2");
         Console.ReadLine();
     }
     static Dictionary<char, Car> Cars = new Dictionary<char,Car>(); // ander datatype?
