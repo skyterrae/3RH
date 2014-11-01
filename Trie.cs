@@ -10,46 +10,80 @@ public class Trie
     public Trie(int[] lvlW)
     {
         LevelWidth = lvlW;
-        Root = new TrieNode(LevelWidth[0]);
+        Root = new TrieNode(LevelWidth[0], 0);
     }
     public bool T_Exists_F_Add(int[] state)
     {
-        TrieNode TN = Root;
+        TrieItem TI = Root;
         int lvl = 0;
-        while (lvl < LevelWidth.Length)
+        bool found = true;
+        lock (Root)
         {
-            if(TN.Exists(state[lvl]))
+            while (!(TI is TrieLeaf))
             {
-                TN = TN.Get(state[lvl]);
+                TrieNode TN = TI as TrieNode;
+                if (!TN.Possible(state[lvl]))
+                {
+                    return true;
+                }
+                if (!found && TN.Exists(state[lvl]))
+                {
+                    TI = TN.Get(state[lvl]);
+                }
+                else
+                {
+                    if (lvl == LevelWidth.Length - 1)
+                        TI = TN.AddLeaf(state[lvl]);
+                    else TI = TN.AddNode(state[lvl], LevelWidth[lvl]);
+                    found = false;
+                }
                 lvl++;
             }
-            else
-            {
-                TN.Add(state[lvl],LevelWidth[lvl]);
-                return false;
-            }
+            return found;
         }
-        return true;
     }
 }
-public class TrieNode
+public abstract class TrieItem
 {
-    TrieNode[] Triebranches;
+    protected int car;
+}
+public class TrieLeaf : TrieItem
+{
+    public TrieLeaf()
+    {
+        car = -1;   
+    }
+}
+public class TrieNode : TrieItem
+{
+    TrieItem[] Triebranches;
 
-    public TrieNode(int items)
+    public TrieNode(int items, int c)
     {
-        Triebranches = new TrieNode[items];
+        Triebranches = new TrieItem[items];
+        car = c;
     }
-    public void Add(int index, int width)
+    public TrieItem AddNode(int index, int width)
     {
-        Triebranches[index] = new TrieNode(width);
+        Triebranches[index] = new TrieNode(width,car+1);
+        return Triebranches[index];
     }
-    public TrieNode Get(int i)
+    public TrieItem AddLeaf(int index)
+    {
+        Triebranches[index] = new TrieLeaf();
+        return Triebranches[index];
+
+    }
+    public TrieItem Get(int i)
     {
         return Triebranches[i];
     }
     public bool Exists(int i)
     { 
         return Triebranches[i] != null; 
+    }
+    public bool Possible(int i)
+    {
+        return i>=0&& i< Triebranches.Length;
     }
 }
