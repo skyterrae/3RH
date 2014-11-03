@@ -7,32 +7,77 @@ using System.Text;
 
 class RushHour
 {
-    List<State>[] States = new List<State>[3];
-    int CurrStateDept;
+    static List<State>[] States = new List<State>[4];
+    static State Result;
+    static public void AddToStatesTree(State s, int depth)
+    {
+        lock (States)
+        {
+            // if needed resize the list[]
+            int l = States.Length;
+            while (l <= depth)
+            {
+                l = l * 2;
+            }
+            Array.Resize(ref States, l);
 
+            // add state to list[]
+            if (States[depth] == null)
+                States[depth] = new List<State>();
+            States[depth].Add(s);
+        }
+    }
+
+    static void MakeTreeStart()
+    {
+        State s = GetRootState();
+        //Trie t = new Trie(getRootLevels());
+        Taboo = new ConcurrentDictionary<int, bool>();
+        States = new List<State>[5];
+        AddToStatesTree(s, 0);
+    }
+    static ConcurrentDictionary<int, bool> Taboo;
     static void Main(string[] args)
     {
         ReadInput();
-
-        State s = GetRootState();
-        //Trie t = new Trie(getRootLevels());
-        ConcurrentDictionary<State, bool> CD = new ConcurrentDictionary<State, bool>();
-        List<State> D = s.GetAllPossibleNextSteps(CD);
-        List<State>[] Ds = new List<State>[D.Count];
-        int i = 0;
-        foreach (State St in D)
+        MakeTreeStart();
+        int kijkDiepte = 0;
+        while (Result == null && kijkDiepte < States.Length)
         {
-            // do something with the Dictionary :\
-            Ds[i] = St.GetAllPossibleNextSteps(CD);
-            i++;
+            //kijkt of de lijst voor dit depth wel bestaat
+            if (States[kijkDiepte] != null)
+            {
+                // kijkt naar alle items in de lijst en maakt volgende stappen uit hen
+                foreach (State St in States[kijkDiepte])
+                {
+                    // volgende stappen maken
+                    St.GetAllPossibleNextSteps(Taboo);
+                }
+            } 
+            //kijkdiepte ophogen   
+            kijkDiepte++;  
+            // afgehandelde lijsten weggooien om ruimte te besparen
+            if (kijkDiepte > 2 && States[kijkDiepte - 2] != null)
+            {
+                // States[kijkDiepte - 2].Clear();
+            }
         }
-        if (Ds.Count() > 2)
-            Ds[2].ElementAt<State>(2).ChainTail.toConsole();
-        else
-            Console.WriteLine("Ds.Count < 2");
+        if (Result != null)
+        {
+            // if (u == 0)
+                Result.ChainTail.CountToConsole();
+            // else
+                Result.ChainTail.StepsToConsole();
+        }
+        else Console.WriteLine("-1");
         Console.ReadLine();
     }
-    static Dictionary<char, Car> Cars = new Dictionary<char,Car>(); // ander datatype?
+    public static void FoundResult(State s)
+{
+    Result = s;
+}
+
+    static Dictionary<char, Car> Cars = new Dictionary<char,Car>(); 
     static int indexCount = 0;
     static Dictionary<int,char> IndexToCarC = new Dictionary<int,char>();
     static Dictionary<char,int> CarCToIndex = new Dictionary<char,int>();
@@ -42,6 +87,7 @@ class RushHour
         // voegt een auto toe
         Cars.Add(keyChar, c);
         CarCToIndex.Add(keyChar,indexCount);
+        c.Index = indexCount;
         IndexToCarC.Add(indexCount,keyChar);
         indexCount++;
     }
@@ -49,6 +95,11 @@ class RushHour
     {
         return Cars[IndexToCarC[index]];
     }
+    public static Car GetCar(char carName)
+    {
+        return Cars[carName];
+    }
+
     public static int[] getRootLevels()
     {
         int[] I = new int[Cars.Count];
@@ -69,10 +120,19 @@ class RushHour
            if(!c.vertical) I[m] = c.Xstart;
            else I[m] = c.Ystart;
        }
-       return new State(I);
+       return new State(I,0);
     }
 
     static int u, w, h, x, y, s;
+    static public int TargetX
+    {
+        get { return x; }
+    }
+    static public int TargetY
+    {
+        get { return y; }
+    }
+
     static public int Height
     {
         get { return h; }

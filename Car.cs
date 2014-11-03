@@ -7,7 +7,7 @@ public class Car
 {
     // direction: 0Horizontal, 1Vertical
     public bool vertical;
-    public int Length, Xstart, Ystart;
+    public int Length, Xstart, Ystart, Index;
     public char C;
     public Car(char c, int x, int y)
     {
@@ -15,6 +15,7 @@ public class Car
         Xstart = x;
         Ystart = y;
         Length = 1;
+        Index = -1;
         vertical = false;
     }
     public Step getStep(int d)
