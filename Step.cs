@@ -11,11 +11,12 @@ public class Step
     Step Prev, Next;
     public void CountToConsole()
     {
-        int i = 0;
+        int i = 1;
         Step st = this;
-        while (st.Prev != null)
+        while (st != null)
         {
-            i = i + 1;
+            if(st.Prev != null && (st.Prev.car != st.car || st.Prev.d != st.d))
+                i++;
             st = st.Prev;
         }
         Console.WriteLine(i);

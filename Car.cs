@@ -7,9 +7,10 @@ public class Car
 {
     // direction: 0Horizontal, 1Vertical
     public bool vertical;
-    public int Length, Xstart, Ystart, Index;
+    public ushort Length, Xstart, Ystart;
+    public int Index;
     public char C;
-    public Car(char c, int x, int y)
+    public Car(char c, ushort x, ushort y)
     {
         C = c;
         Xstart = x;

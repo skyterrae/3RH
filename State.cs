@@ -8,16 +8,16 @@ using System.Text;
 // public enum Step { Plus, Min }
 public class State
 {
-    public int[] CarState;
+    public ushort[] CarState;
     public int Depth;
     public Step ChainTail;
-    public State(int[] cs, int depth)
+    public State(ushort[] cs, int depth)
     {
         CarState = cs;
         ChainTail = null;
         Depth = depth;
     }
-    public State(int[] cs, Step PrevChainT, Step ThisStep, int depth)
+    public State(ushort[] cs, Step PrevChainT, Step ThisStep, int depth)
     {
         CarState = cs;
         ChainTail = ThisStep;
@@ -28,28 +28,29 @@ public class State
     public bool DoesItExistYet(Trie t)
     {
         //checks if it is n the Trie already?
-        return t.T_Exists_F_Add(CarState);
+        // return t.T_Exists_F_Add(CarState);
+        return false;
     }
-    public bool DoesItExistYet(ConcurrentDictionary<int, bool> CD)
+    public bool DoesItExistYet()
     {
-        int h = this.GetHashCode();
+        uint h = this.GetHashCode();
         //checks if it is n the Trie already?
-        if (CD.ContainsKey(h))
+        if (RushHour.Taboo.ContainsKey(h))
             return true;
         else
         {
-            CD.AddOrUpdate(h, true, new Func<int, bool, bool>((i, b) => true));
+            RushHour.Taboo.AddOrUpdate(h, true, new Func<uint, bool, bool>((i, b) => true));
             return false;
         }
     }
-    public override int GetHashCode()
+    public new uint GetHashCode()
     {
         int hash = 0;
-        for (int i = 0; i < CarState.Length; i++)
+        for (uint i = 0; i < CarState.Length; i++)
         {
             hash = hash + CarState[i] * RushHour.HashHelper[i];
         }
-        return hash;
+        return (uint)hash;
     }
     public bool XreachesTarget()
     {
@@ -60,14 +61,14 @@ public class State
             //verticaal en dezelfde kolom
             int tarY = RushHour.TargetY;
             int carY = CarState[x.Index];
-            return carY <= tarY && tarY < carY + x.Length;
+            return carY == tarY;
         }
         else if (!x.vertical && x.Ystart == RushHour.TargetY)
         {
             //verticaal en dezelfde kolom
             int tarX = RushHour.TargetX;
             int carX = CarState[x.Index];
-            return carX <= tarX && tarX < carX + x.Length;
+            return carX == tarX;
         }
         else return false;
     }
@@ -95,7 +96,7 @@ public class State
                 int tempYA = temp_car.Ystart;
                 int curXB = curXA + 1;
                 int curYB = curYA + 1;
-                int tempXB = tempXA+ 1;
+                int tempXB = tempXA + 1;
                 int tempYB = tempYA + 1;
                 if (current_car.vertical)
                 {
@@ -117,7 +118,7 @@ public class State
                     tempXA = CarState[j];
                     tempXB = tempXA + temp_car.Length;
                 }
-                
+
                 // kijkt of er een cllision is, zo ja, geeft direct false terug;
                 if ((curXA <= tempXA && tempXA < curXB) || (tempXA <= curXA && curXA < tempXB))
                 {
@@ -125,6 +126,7 @@ public class State
                     {
                         return false;
                     }
+
                 }
             }
         }
@@ -132,14 +134,14 @@ public class State
         return true;
     }
 
-    public void GetAllPossibleNextSteps(ConcurrentDictionary<int,bool> CD)
+    public void GetAllPossibleNextSteps()
     {
         for (int i = 0; i < CarState.Length; i++)
         {
-            int curP = CarState[i];
-            CarState[i] = curP + 1;
-            State s = new State((int[])CarState.Clone(), ChainTail, RushHour.GetCar(i).getStep(1), Depth+1);
-            if (s.DoesItNotCollide() && !s.DoesItExistYet(CD))
+            ushort curP = CarState[i];
+            CarState[i] = (ushort)(curP + 1);
+            State s = new State((ushort[])CarState.Clone(), ChainTail, RushHour.GetCar(i).getStep(1), Depth+1);
+            if (s.DoesItNotCollide() && !s.DoesItExistYet())
             {
                 // kijkt of de state ook de target vangt
                 if (s.XreachesTarget())
@@ -150,9 +152,9 @@ public class State
                 // zo niet, voeg to aan mogelijkheden
                 RushHour.AddToStatesTree(s, s.Depth);
             }
-            CarState[i] = curP - 1;
-            s = new State((int[])CarState.Clone(), ChainTail, RushHour.GetCar(i).getStep(-1), Depth + 1);
-            if (s.DoesItNotCollide() && !s.DoesItExistYet(CD))
+            CarState[i] = (ushort)(curP - 1);
+            s = new State((ushort[])CarState.Clone(), ChainTail, RushHour.GetCar(i).getStep(-1), Depth + 1);
+            if (s.DoesItNotCollide() && !s.DoesItExistYet())
             {
                 // kijkt of de state ook de target vangt
                 if (s.XreachesTarget())

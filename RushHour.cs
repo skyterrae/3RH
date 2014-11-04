@@ -32,11 +32,38 @@ class RushHour
     {
         State s = GetRootState();
         //Trie t = new Trie(getRootLevels());
-        Taboo = new ConcurrentDictionary<int, bool>();
+        Taboo = new ConcurrentDictionary<uint, bool>();
         States = new List<State>[5];
         AddToStatesTree(s, 0);
     }
-    static ConcurrentDictionary<int, bool> Taboo;
+    static public ConcurrentDictionary<uint, bool> Taboo;
+
+    static void DivideComputeState(int depth)
+    {
+        IEnumerator<State> e = States[depth].GetEnumerator();
+        lock (QueLock)
+        {
+            QueCount = States[depth].Count;
+        }
+        while (e.MoveNext())
+        {
+            State s = e.Current;
+            ThreadPool.QueueUserWorkItem( new WaitCallback(ComputeState),s);
+        }
+        while (QueCount > 0) ; // wait for the que to finish
+    }
+    static public void ComputeState(object s)
+    {
+        State st = (State)s;
+        st.GetAllPossibleNextSteps();
+        lock (QueLock)
+        {
+            QueCount = QueCount - 1; ;
+        }
+
+    }
+    static int QueCount;
+    static object QueLock = new Object();
     static void Main(string[] args)
     {
         ReadInput();
@@ -45,28 +72,30 @@ class RushHour
         while (Result == null && kijkDiepte < States.Length)
         {
             //kijkt of de lijst voor dit depth wel bestaat
-            if (States[kijkDiepte] != null)
+            if (States[kijkDiepte] != null && States[kijkDiepte].Count>0)
             {
-                // kijkt naar alle items in de lijst en maakt volgende stappen uit hen
+                /* kijkt naar alle items in de lijst en maakt volgende stappen uit hen
                 foreach (State St in States[kijkDiepte])
                 {
                     // volgende stappen maken
                     St.GetAllPossibleNextSteps(Taboo);
                 }
+                */
+                DivideComputeState(kijkDiepte);
             } 
             //kijkdiepte ophogen   
             kijkDiepte++;  
             // afgehandelde lijsten weggooien om ruimte te besparen
             if (kijkDiepte > 2 && States[kijkDiepte - 2] != null)
             {
-                // States[kijkDiepte - 2].Clear();
+                 // States[kijkDiepte - 2].Clear();
             }
         }
         if (Result != null)
         {
-            // if (u == 0)
+             if (u == 0)
                 Result.ChainTail.CountToConsole();
-            // else
+             else
                 Result.ChainTail.StepsToConsole();
         }
         else Console.WriteLine("-1");
@@ -113,7 +142,7 @@ class RushHour
     }
     public static State GetRootState()
     {
-       int[] I = new int[Cars.Count];
+       ushort[] I = new ushort[Cars.Count];
        for (int m = 0; m < indexCount; m++)
        {
            Car c = Cars[IndexToCarC[m] ];
@@ -159,11 +188,11 @@ class RushHour
         // leest grid in
         int[,] GridI = new int[w, h];
         char[] LineC;
-        for (int j = 0; j < h; j++)
+        for (ushort j = 0; j < h; j++)
         {
             //lees regel in als charArray
             LineC = Console.ReadLine().ToCharArray();
-            for (int i = 0; i < w; i++)
+            for (ushort i = 0; i < w; i++)
             {
                 if (LineC[i] != '.')
                 {
