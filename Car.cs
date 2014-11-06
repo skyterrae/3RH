@@ -22,17 +22,17 @@ public class Car
     public Step getStep(int d)
     {
         Direction dir;
-        if(d==-1 && !vertical) //L
+        if(d<0 && !vertical) //L
             dir = Direction.l;
-        else if(d==1 && vertical) //D
+        else if(d>0 && vertical) //D
             dir = Direction.d;
 
-        else if(d==-1 && vertical) //U
+        else if(d<0 && vertical) //U
             dir = Direction.u;
         else  //R
             dir = Direction.r;
 
-        return new Step(C, dir);
+        return new Step(C,dir,Math.Abs(d));
     }
 }
 

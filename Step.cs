@@ -9,6 +9,7 @@ public class Step
     char car;
     Direction d;
     Step Prev, Next;
+    int amount;
     public void CountToConsole()
     {
         int i = 1;
@@ -22,10 +23,11 @@ public class Step
         Console.WriteLine(i);
     }
 
-    public Step(char c, Direction D)
+    public Step(char c, Direction D, int am)
     {
         car = c;
         d = D;
+        amount = am;
         Prev = null;
         Next = null;
     }
@@ -46,23 +48,18 @@ public class Step
     public void StepsToConsole()
     {
         Step s = this.GetChain();
-        int i = 1;
         StringBuilder sb = new StringBuilder();
         while (s != null)
         {
-            //kijkt of dezelfde auto nu nogeens dezelfde richting upgaat
-            if (s.Next !=null && s.Next.car == s.car && s.Next.d == s.d)
-                i++;
-            else if(s.Next !=null)
+            if(s.Next !=null)
             {
                 //andere auto/richting dan vorige step
-                sb.Append(s.car.ToString() + s.d.ToString() + i.ToString()+", ");
-                i = 1;
+                sb.Append(s.car.ToString() + s.d.ToString() + s.amount.ToString()+", ");
             }
             else if (s.Next == null)
             {
                 // laatste append hoeft geen komma op het eidn
-                sb.Append(s.car.ToString() + s.d.ToString() + i.ToString());
+                sb.Append(s.car.ToString() + s.d.ToString() + s.amount.ToString());
             }
             s = s.Next;
         }

@@ -9,56 +9,61 @@ class RushHour
 {
     static List<State>[] States = new List<State>[4];
     static State Result;
-    static public void AddToStatesTree(State s, int depth)
+    static public void AddToStatesTree(State state, int depth)
     {
         lock (States)
         {
             // if needed resize the list[]
             int l = States.Length;
-            while (l <= depth)
+            if (l <= depth)
             {
-                l = l * 2;
+                while (l <= depth)
+                {
+                    l = l * 2;
+                }
+                Array.Resize(ref States, l);
             }
-            Array.Resize(ref States, l);
 
             // add state to list[]
             if (States[depth] == null)
                 States[depth] = new List<State>();
-            States[depth].Add(s);
+            States[depth].Add(state);
         }
     }
 
     static void MakeTreeStart()
     {
-        State s = GetRootState();
+        State root = GetRootState();
         //Trie t = new Trie(getRootLevels());
         Taboo = new ConcurrentDictionary<uint, bool>();
         States = new List<State>[5];
-        AddToStatesTree(s, 0);
+        AddToStatesTree(root, 0);
     }
     static public ConcurrentDictionary<uint, bool> Taboo;
 
     static void DivideComputeState(int depth)
     {
-        IEnumerator<State> e = States[depth].GetEnumerator();
+        //IEnumerator<State> e = States[depth].GetEnumerator();
         lock (QueLock)
         {
             QueCount = States[depth].Count;
         }
-        while (e.MoveNext())
+        //while (e.MoveNext())
+        //{
+            //State state = e.Current;
+        foreach(State state in States[depth])
         {
-            State s = e.Current;
-            ThreadPool.QueueUserWorkItem( new WaitCallback(ComputeState),s);
+            ThreadPool.QueueUserWorkItem( new WaitCallback(ComputeState),state);
         }
         while (QueCount > 0) ; // wait for the que to finish
     }
-    static public void ComputeState(object s)
+    static public void ComputeState(object obj)
     {
-        State st = (State)s;
-        st.GetAllPossibleNextSteps();
+        State state = (State)obj;
+        state.GetAllPossibleNextSteps();
         lock (QueLock)
         {
-            QueCount = QueCount - 1; ;
+            QueCount = QueCount - 1;
         }
 
     }
@@ -74,22 +79,15 @@ class RushHour
             //kijkt of de lijst voor dit depth wel bestaat
             if (States[kijkDiepte] != null && States[kijkDiepte].Count>0)
             {
-                /* kijkt naar alle items in de lijst en maakt volgende stappen uit hen
-                foreach (State St in States[kijkDiepte])
-                {
-                    // volgende stappen maken
-                    St.GetAllPossibleNextSteps(Taboo);
-                }
-                */
                 DivideComputeState(kijkDiepte);
-            } 
-            //kijkdiepte ophogen   
-            kijkDiepte++;  
+            }   
             // afgehandelde lijsten weggooien om ruimte te besparen
             if (kijkDiepte > 2 && States[kijkDiepte - 2] != null)
             {
-                 // States[kijkDiepte - 2].Clear();
+                 //States[kijkDiepte - 2].Clear();
             }
+            //kijkdiepte ophogen   
+            kijkDiepte++;  
         }
         if (Result != null)
         {
@@ -98,12 +96,12 @@ class RushHour
              else
                 Result.ChainTail.StepsToConsole();
         }
-        else Console.WriteLine("-1");
+        else Console.WriteLine("Geen oplossing gevonden");
         Console.ReadLine();
     }
-    public static void FoundResult(State s)
+    public static void FoundResult(State state)
 {
-    Result = s;
+    Result = state;
 }
 
     static Dictionary<char, Car> Cars = new Dictionary<char,Car>(); 
@@ -135,8 +133,8 @@ class RushHour
         for (int m = 0; m < indexCount; m++)
         {
             Car c = Cars[IndexToCarC[m]];
-            if (!c.vertical) I[m] = w -c.Length;
-            else I[m] = h -c.Length;
+            if (!c.vertical) I[m] = w - c.Length;
+            else I[m] = h - c.Length;
         }
         return I;
     }

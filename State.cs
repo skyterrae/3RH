@@ -13,47 +13,46 @@ public class State
     public Step ChainTail;
     public State(ushort[] cs, int depth)
     {
+        // constructor with empty chainTail (for the root state)
         CarState = cs;
         ChainTail = null;
         Depth = depth;
     }
     public State(ushort[] cs, Step PrevChainT, Step ThisStep, int depth)
     {
+        // constructor with adding to the chainTail
         CarState = cs;
         ChainTail = ThisStep;
         ChainTail.AddToChain(PrevChainT);
         Depth = depth;
-
     }
     public bool DoesItExistYet(Trie t)
     {
-        //checks if it is n the Trie already?
+        // looks if it already in the Trie
         // return t.T_Exists_F_Add(CarState);
         return false;
     }
-    public bool DoesItExistYet()
+    public bool DoesNotExistYet()
     {
+        // try add the value. If it is already inthere, it gives a false
         uint h = this.GetHashCode();
-        //checks if it is n the Trie already?
-        if (RushHour.Taboo.ContainsKey(h))
-            return true;
-        else
-        {
-            RushHour.Taboo.AddOrUpdate(h, true, new Func<uint, bool, bool>((i, b) => true));
-            return false;
-        }
+        return RushHour.Taboo.TryAdd(h, false);
     }
     public new uint GetHashCode()
     {
-        int hash = 0;
-        for (uint i = 0; i < CarState.Length; i++)
+        //hash code from :
+        // http://stackoverflow.com/questions/3404715/c-sharp-hashcode-for-array-of-ints
+        int hc = CarState.Length;
+        for (int i = 0; i < CarState.Length; ++i)
         {
-            hash = hash + CarState[i] * RushHour.HashHelper[i];
+            hc = unchecked(hc * 314159 + CarState[i]);
         }
-        return (uint)hash;
+        return (uint)hc;
     }
     public bool XreachesTarget()
     {
+        // checks or an answer to the RushHour is found
+        // check or x is on its target position
         Car x = RushHour.GetCar('x');
 
         if (x.vertical && x.Xstart == RushHour.TargetX)
@@ -72,12 +71,13 @@ public class State
         }
         else return false;
     }
-    public bool DoesItNotCollide()
+    public bool DoesNotCollide()
     {
         //checks if the cars stay within the grid and or their is a carcollision
         for (int i = 0; i < CarState.Length; i++)
         {
             Car current_car = RushHour.GetCar(i);
+            // checks car inside of grid
             int options;
             if (current_car.vertical)
                 options = RushHour.Height - current_car.Length;
@@ -85,6 +85,7 @@ public class State
             if (CarState[i] < 0 || options < CarState[i])
                 return false;
 
+            //check collision with other cars
             for (int j = i + 1; j < CarState.Length; j++)
             {
                 Car temp_car = RushHour.GetCar(j);
@@ -136,34 +137,56 @@ public class State
 
     public void GetAllPossibleNextSteps()
     {
+        // add all posible next states to the Taboolist and to the list of nextstates States[Depth+1]
         for (int i = 0; i < CarState.Length; i++)
         {
+            //remember current state
             ushort curP = CarState[i];
-            CarState[i] = (ushort)(curP + 1);
+            // move car up/right
+            int k = 1;
+            CarState[i] = (ushort)(curP + k);
             State s = new State((ushort[])CarState.Clone(), ChainTail, RushHour.GetCar(i).getStep(1), Depth+1);
-            if (s.DoesItNotCollide() && !s.DoesItExistYet())
+            // moves it up one step as long as it does not collide or fall out of the grid
+            while (s.DoesNotCollide())
             {
-                // kijkt of de state ook de target vangt
-                if (s.XreachesTarget())
+                //checks if the current state is already in Taboo
+                if (s.DoesNotExistYet())
                 {
-                    RushHour.FoundResult(s);
-                    break;
+                    // kijkt of de state ook de target vangt
+                    if (s.XreachesTarget())
+                    {
+                        // zo ja, geef het resultaat terug
+                        RushHour.FoundResult(s);
+                        break;
+                    }
+                    // zo niet, voeg to aan mogelijkheden
+                    RushHour.AddToStatesTree(s, s.Depth);
                 }
-                // zo niet, voeg to aan mogelijkheden
-                RushHour.AddToStatesTree(s, s.Depth);
+                // ga een stap verder
+                k++;
+                CarState[i] = (ushort)(curP + k);
+                s = new State((ushort[])CarState.Clone(), ChainTail, RushHour.GetCar(i).getStep(k), Depth + 1);
             }
-            CarState[i] = (ushort)(curP - 1);
+            //doe hetzelfde voor stappen naar beneden/links
+            k = 1;
+            CarState[i] = (ushort)(curP - k);
             s = new State((ushort[])CarState.Clone(), ChainTail, RushHour.GetCar(i).getStep(-1), Depth + 1);
-            if (s.DoesItNotCollide() && !s.DoesItExistYet())
+            while (s.DoesNotCollide())
             {
-                // kijkt of de state ook de target vangt
-                if (s.XreachesTarget())
+                if (s.DoesNotExistYet())
                 {
-                    RushHour.FoundResult(s);
-                    break;
+                    // kijkt of de state ook de target vangt
+                    if (s.XreachesTarget())
+                    {
+                        RushHour.FoundResult(s);
+                        break;
+                    }
+                    // zo niet, voeg to aan mogelijkheden
+                    RushHour.AddToStatesTree(s, s.Depth);
                 }
-                // zo niet, voeg to aan mogelijkheden
-                RushHour.AddToStatesTree(s, s.Depth);
+                k++;
+                CarState[i] = (ushort)(curP - k);
+                s = new State((ushort[])CarState.Clone(), ChainTail, RushHour.GetCar(i).getStep(-k), Depth + 1);
             }
             // zet waarde van Deze state terug op zichzelf
             CarState[i] = curP;
