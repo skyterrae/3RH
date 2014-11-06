@@ -9,7 +9,7 @@ using System.Text;
 public class State
 {
     public ushort[] CarState;
-    public int Depth;
+    public int Depth, Heuristiek;
     public Step ChainTail;
     public State(ushort[] cs, int depth)
     {
@@ -17,6 +17,7 @@ public class State
         CarState = cs;
         ChainTail = null;
         Depth = depth;
+        Heuristiek = depth;
     }
     public State(ushort[] cs, Step PrevChainT, Step ThisStep, int depth)
     {
@@ -25,6 +26,14 @@ public class State
         ChainTail = ThisStep;
         ChainTail.AddToChain(PrevChainT);
         Depth = depth;
+        if (RushHour.Heuristical)
+            Heuristiek = calculateHeuristiek();
+        else Heuristiek = depth;
+    }
+    private int calculateHeuristiek()
+    {
+        // not implemented
+        return Depth;
     }
     public bool DoesItExistYet(Trie t)
     {
@@ -35,13 +44,14 @@ public class State
     public bool DoesNotExistYet()
     {
         // try add the value. If it is already inthere, it gives a false
-        uint h = this.GetHashCode();
+        uint h = this.getUniqueHash();
         return RushHour.Taboo.TryAdd(h, false);
     }
-    public new uint GetHashCode()
+    public uint getUniqueHash()
     {
         //hash code from :
         // http://stackoverflow.com/questions/3404715/c-sharp-hashcode-for-array-of-ints
+        // it is supposed to be unique, for every unique state
         int hc = CarState.Length;
         for (int i = 0; i < CarState.Length; ++i)
         {
@@ -160,7 +170,7 @@ public class State
                         break;
                     }
                     // zo niet, voeg to aan mogelijkheden
-                    RushHour.AddToStatesTree(s, s.Depth);
+                    RushHour.AddToStatesTree(s, s.Heuristiek);
                 }
                 // ga een stap verder
                 k++;
@@ -182,7 +192,7 @@ public class State
                         break;
                     }
                     // zo niet, voeg to aan mogelijkheden
-                    RushHour.AddToStatesTree(s, s.Depth);
+                    RushHour.AddToStatesTree(s, s.Heuristiek);
                 }
                 k++;
                 CarState[i] = (ushort)(curP - k);
