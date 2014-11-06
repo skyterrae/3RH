@@ -190,7 +190,8 @@ class RushHour
     public static void FoundResult(State state)
     {
         // public method to invoke when a state realises it has solved the puzzle
-        result = state;
+        if(result == null || result.Depth < state.Depth)
+            result = state;
     }
     public static void AddToStatesTree(State state, int depth)
     {

@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-
 using System.Linq;
 using System.Text;
 
-// public enum Step { Plus, Min }
 public class State
 {
     public ushort[] CarState;
@@ -30,10 +28,66 @@ public class State
             Heuristiek = calculateHeuristiek();
         else Heuristiek = depth;
     }
+
     private int calculateHeuristiek()
     {
-        // not implemented
-        return Depth;
+        int dist, between = 0;
+
+        Car x = RushHour.GetCar('x');
+        if (x.vertical)
+            dist = Math.Abs(RushHour.TargetY - CarState[x.Index]);
+        else dist = Math.Abs(RushHour.TargetX - CarState[x.Index]);
+        
+        //check other cars if the are between x and target
+        for (int j = 0; j < CarState.Length; j++)
+        {
+            Car temp_car = RushHour.GetCar(j);
+            if (x.Index != j)
+            {
+                //start posities van de autos 
+                int curXA = x.Xstart;
+                int curYA = x.Ystart;
+                int tempXA = temp_car.Xstart;
+                int tempYA = temp_car.Ystart;
+                int curXB = curXA + 1;
+                int curYB = curYA + 1;
+                int tempXB = tempXA + 1;
+                int tempYB = tempYA + 1;
+                if (x.vertical)
+                {
+                    curYA = CarState[x.Index];
+                    curYB = RushHour.TargetY;
+                }
+                else
+                {
+                    curXA = CarState[x.Index];
+                    curXB = RushHour.TargetX;
+                }
+                if (temp_car.vertical)
+                {
+                    tempYA = CarState[x.Index];
+                    tempYB = tempYA + temp_car.Length;
+                }
+                else
+                {
+                    tempXA = CarState[x.Index];
+                    tempXB = tempXA + temp_car.Length;
+                }
+
+                // kijkt of er een collision is, zo ja, geeft direct false terug;
+                if ((curXA <= tempXA && tempXA < curXB) || (tempXA <= curXA && curXA < tempXB))
+                {
+                    if ((curYA <= tempYA && tempYA < curYB) || (tempYA <= curYA && curYA < tempYB))
+                    {
+                        between++;
+                    }
+                }
+            }
+        }
+        //dist = distance tussen x en target
+        //between = aantal auto's dat ertussen in de weg zit
+        return 2*Depth + dist + between;
+
     }
     public bool DoesItExistYet(Trie t)
     {
@@ -47,7 +101,7 @@ public class State
         uint h = this.getUniqueHash();
         return RushHour.Taboo.TryAdd(h, false);
     }
-    public uint getUniqueHash()
+    private uint getUniqueHash()
     {
         //hash code from :
         // http://stackoverflow.com/questions/3404715/c-sharp-hashcode-for-array-of-ints
