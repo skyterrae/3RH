@@ -10,7 +10,7 @@ class RushHour
     #region static membervariables
     static int u, w, h, x, y, s;
     static List<State>[] states = new List<State>[4];
-    static public ConcurrentDictionary<uint, bool> Taboo = new ConcurrentDictionary<uint,bool>();
+    static public TabooD Taboo = new TabooD();
     static Dictionary<char, Car> cars = new Dictionary<char, Car>();
     static int indexCount = 0;
     static Dictionary<int, char> indexToChar = new Dictionary<int, char>();
@@ -147,12 +147,16 @@ class RushHour
         //writes output to the console
         if (result != null)
         {
-            if (u == 0)
-                result.ChainTail.CountToConsole();
-            else
+            if (SolveMode)
                 result.ChainTail.StepsToConsole();
+            else result.ChainTail.CountToConsole();
         }
-        else Console.WriteLine("Geen oplossing gevonden");
+        else
+        {
+            if (SolveMode)
+                Console.WriteLine("Geen oplossing gevonden");
+            else Console.WriteLine("-1");
+        }
     }
 
     #region static properties to be called from other classes
@@ -183,6 +187,10 @@ class RushHour
     public static bool Heuristical
     {
         get { return s == 1; }
+    }
+    public static bool SolveMode
+    {
+        get { return u == 1; }
     }
     #endregion
 
