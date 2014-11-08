@@ -5,6 +5,9 @@ using System.Text;
 
 public class Trie
 {
+    // leuk begin van een Trie object, maar hij werkt niet
+    // negeer maar
+
     int[] LevelWidth;
     TrieNode Root;
     public Trie(int[] lvlW)

@@ -9,7 +9,7 @@ class RushHour
 {
     #region static membervariables
     static int u, w, h, x, y, s;
-    static List<State>[] states = new List<State>[4];
+    static List<State>[] states = new List<State>[25];
     static public TabooD Taboo = new TabooD();
     static Dictionary<char, Car> cars = new Dictionary<char, Car>();
     static int indexCount = 0;

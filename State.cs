@@ -86,7 +86,7 @@ public class State
         }
         //dist = distance tussen x en target
         //between = aantal auto's dat ertussen in de weg zit
-        return 2*Depth + dist + between;
+        return Depth + dist + between;
 
     }
     public bool DoesItExistYet(Trie t)
